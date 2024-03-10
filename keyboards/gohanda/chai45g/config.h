@@ -1,3 +1,6 @@
+// Copyright 2021 gohanda_kbd (@gohanda_kbd)
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 #pragma once
 
 #define VIAL_KEYBOARD_UID {0xC5, 0xE9, 0x5A, 0xC2, 0xE8, 0x7A, 0xF4, 0x35}
