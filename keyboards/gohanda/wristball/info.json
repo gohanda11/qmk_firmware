@@ -1,0 +1,21 @@
+{
+    "manufacturer": "gohanda_kbd",
+    "keyboard_name": "wristball",
+    "maintainer": "gohanda_kbd",
+    "url": "",
+    "usb": {
+        "device_version": "1.0.0",
+        "pid": "0x0023",
+        "vid": "0x1130"
+    },
+    "layouts": {
+        "LAYOUT": {
+            "layout": [
+                {"matrix":[0,0], "x":0, "y":0, "w":1.75}, 
+                {"matrix":[0,1], "x":1.75, "y":0, "w":1.75  }, 
+                {"matrix":[1,0], "x":5.5, "y":0, "w":1.75}, 
+                {"matrix":[1,1], "x":7.25, "y":0, "w":1.75}
+            ]
+        }
+    }
+}
