@@ -15,79 +15,93 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "quantum.h"
-#include <math.h>
-#include "wristball.h"
-#include "wait.h"
-#include "debug.h"
-#include <stdio.h>
-#include "pointing_device.h"
-extern const pointing_device_driver_t pointing_device_driver;
+ #include "quantum.h"
+ #include <math.h>
+ #include "wristball.h"
+ #include "wait.h"
+ #include "debug.h"
+ #include <stdio.h>
+ #include "pointing_device.h"
+ extern const pointing_device_driver_t pointing_device_driver;
+ 
+ 
+ // Invert vertical scroll direction
+ #ifndef COCOT_SCROLL_INV_DEFAULT
+ #    define COCOT_SCROLL_INV_DEFAULT 1
+ #endif
+ 
+ #ifndef COCOT_CPI_OPTIONS
+ #    define COCOT_CPI_OPTIONS { 200, 400, 800, 1600, 3200 }
+ //#    define COCOT_CPI_OPTIONS { 400, 800 }
+ #    ifndef COCOT_CPI_DEFAULT
+ #       define COCOT_CPI_DEFAULT 3
+ #    endif
+ #endif
+ #ifndef COCOT_CPI_DEFAULT
+ #    define COCOT_CPI_DEFAULT 3
+ #endif
+ 
+ #ifndef COCOT_SCROLL_DIVIDERS
+ #    define COCOT_SCROLL_DIVIDERS { 1, 2, 3, 4, 5, 6 }
+ #    ifndef COCOT_SCROLL_DIV_DEFAULT
+ #       define COCOT_SCROLL_DIV_DEFAULT 4
+ #    endif
+ #endif
+ #ifndef COCOT_SCROLL_DIV_DEFAULT
+ #    define COCOT_SCROLL_DIV_DEFAULT 4
+ #endif
+ 
+ 
+ #ifndef COCOT_ROTATION_ANGLE
+ #    define COCOT_ROTATION_ANGLE { -60, -45, -30, -15, 0, 15, 30, 45, 60 }
+ #    ifndef COCOT_ROTATION_DEFAULT
+ #       define COCOT_ROTATION_DEFAULT 3
+ #    endif
+ #endif
+ #ifndef COCOT_ROTATION_DEFAULT
+ #    define COCOT_ROTATION_DEFAULT 3
+ #endif
+ 
+ 
+ cocot_config_t cocot_config;
+ uint16_t cpi_array[] = COCOT_CPI_OPTIONS;
+ uint16_t scrl_div_array[] = COCOT_SCROLL_DIVIDERS;
+ uint16_t angle_array[] = COCOT_ROTATION_ANGLE;
+ #define CPI_OPTION_SIZE (sizeof(cpi_array) / sizeof(uint16_t))
+ #define SCRL_DIV_SIZE (sizeof(scrl_div_array) / sizeof(uint16_t))
+ #define ANGLE_SIZE (sizeof(angle_array) / sizeof(uint16_t))
+ 
+ 
+ // Scroll Accumulation
+ static int16_t h_acm       = 0;
+ static int16_t v_acm       = 0;
+ 
+ 
+ void pointing_device_init_kb(void) {
+     // set the CPI.
+     pointing_device_set_cpi(cpi_array[cocot_config.cpi_idx]);
+ }
 
 
-// Invert vertical scroll direction
-#ifndef COCOT_SCROLL_INV_DEFAULT
-#    define COCOT_SCROLL_INV_DEFAULT 1
-#endif
-
-#ifndef COCOT_CPI_OPTIONS
-#    define COCOT_CPI_OPTIONS { 200, 400, 800, 1600, 3200 }
-//#    define COCOT_CPI_OPTIONS { 400, 800 }
-#    ifndef COCOT_CPI_DEFAULT
-#       define COCOT_CPI_DEFAULT 3
-#    endif
-#endif
-#ifndef COCOT_CPI_DEFAULT
-#    define COCOT_CPI_DEFAULT 3
-#endif
-
-#ifndef COCOT_SCROLL_DIVIDERS
-#    define COCOT_SCROLL_DIVIDERS { 1, 2, 3, 4, 5, 6 }
-#    ifndef COCOT_SCROLL_DIV_DEFAULT
-#       define COCOT_SCROLL_DIV_DEFAULT 4
-#    endif
-#endif
-#ifndef COCOT_SCROLL_DIV_DEFAULT
-#    define COCOT_SCROLL_DIV_DEFAULT 4
-#endif
-
-
-#ifndef COCOT_ROTATION_ANGLE
-#    define COCOT_ROTATION_ANGLE { -60, -45, -30, -15, 0, 15, 30, 45, 60 }
-#    ifndef COCOT_ROTATION_DEFAULT
-#       define COCOT_ROTATION_DEFAULT 3
-#    endif
-#endif
-#ifndef COCOT_ROTATION_DEFAULT
-#    define COCOT_ROTATION_DEFAULT 3
-#endif
-
-
-cocot_config_t cocot_config;
-uint16_t cpi_array[] = COCOT_CPI_OPTIONS;
-uint16_t scrl_div_array[] = COCOT_SCROLL_DIVIDERS;
-uint16_t angle_array[] = COCOT_ROTATION_ANGLE;
-#define CPI_OPTION_SIZE (sizeof(cpi_array) / sizeof(uint16_t))
-#define SCRL_DIV_SIZE (sizeof(scrl_div_array) / sizeof(uint16_t))
-#define ANGLE_SIZE (sizeof(angle_array) / sizeof(uint16_t))
-
-
-// Scroll Accumulation
-static int16_t h_acm       = 0;
-static int16_t v_acm       = 0;
-
-
-void pointing_device_init_kb(void) {
-    // set the CPI.
-    pointing_device_set_cpi(cpi_array[cocot_config.cpi_idx]);
-}
-
-
-report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
-
-    double rad = angle_array[cocot_config.rotation_angle] * (M_PI / 180) * -1;
-    int8_t x_rev =  + mouse_report.x * cos(rad) - mouse_report.y * sin(rad);
-    int8_t y_rev =  + mouse_report.x * sin(rad) + mouse_report.y * cos(rad);
+ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
+    
+    int8_t x_rev, y_rev;
+    
+    // 90度単位で回転
+    switch (cocot_config.rotation_angle) {
+        case 0:  // 0度
+            x_rev = -mouse_report.x;
+            y_rev = -mouse_report.y;
+            break;
+        case 3:  // 270度回転
+            x_rev = mouse_report.y;
+            y_rev = -mouse_report.x;
+            break;
+        default:
+            x_rev = -mouse_report.x;
+            y_rev = -mouse_report.y;
+            break;
+    }    
 
     if (cocot_get_scroll_mode()) {
         // rock scroll direction
@@ -188,6 +202,14 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
     if (keycode == SCRL_MO) {
         { cocot_config.scrl_mode ^= 1; }
     }
+    
+    // 回転角度を270度と180度で切り替え
+    if (keycode == ROT_SW && record->event.pressed) {
+        // 0度と270度をループする
+        cocot_config.rotation_angle = (cocot_config.rotation_angle == 0) ? 3 : 0;
+        eeconfig_update_kb(cocot_config.raw);
+    }
+    
 
     return true;
 }
@@ -199,6 +221,7 @@ void eeconfig_init_kb(void) {
     cocot_config.rotation_angle = COCOT_ROTATION_DEFAULT;
     cocot_config.scrl_inv = COCOT_SCROLL_INV_DEFAULT;
     cocot_config.scrl_mode = false;
+    cocot_config.rotate_270 = true; // デフォルトでは270度回転
     eeconfig_update_kb(cocot_config.raw);
     eeconfig_init_user();
 }
@@ -223,4 +246,3 @@ bool cocot_get_scroll_mode(void) {
 void cocot_set_scroll_mode(bool mode) {
     cocot_config.scrl_mode = mode;
 }
-
