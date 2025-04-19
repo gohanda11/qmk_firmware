@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include QMK_KEYBOARD_H
+#include "eeconfig.h"
 #include <stdio.h>
 #include "quantum.h"
 
@@ -154,6 +155,7 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 };
 
 
+
 #ifdef RGB_MATRIX_ENABLE
 
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) { 
@@ -184,3 +186,17 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 };
 
 #endif
+
+void reset_eeprom(void) {
+  eeconfig_init(); // EEPROMの初期化
+  }
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  if (record->event.pressed) {
+  if (keycode == KC_F13) {
+  reset_eeprom(); // EEPROMをリセット
+  return false; // これ以上のキー処理を行わない
+  }
+  }
+  return true;
+  }
