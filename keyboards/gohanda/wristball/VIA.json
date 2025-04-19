@@ -11,7 +11,8 @@
     {"name": "ROT_L15", "title": "Rotate sensor Y-axis by 15 degrees counterclockwise", "shortName": "ROT_L15"},
     {"name": "SCRL_MO", "title": "Enable scroll mode while being pressed", "shortName": "SCRL_MO"},
     {"name": "SCRL_TO", "title": "Toggle scroll and cursor mode each time pressed", "shortName": "SCRL_TO"},
-    {"name": "SCRL_IN", "title": "Invert scroll direction", "shortName": "SCRL_IN"}
+    {"name": "SCRL_IN", "title": "Invert scroll direction", "shortName": "SCRL_IN"},
+    {"name": "ROT_SW", "title": "Toggle between 270 and 180 degree rotation", "shortName": "ROT_SW"}
   ],
   "layouts": {
     "keymap": [
